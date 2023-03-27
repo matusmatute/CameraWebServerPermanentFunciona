@@ -17,7 +17,9 @@
 #include "img_converters.h"
 #include "camera_index.h"
 #include "Arduino.h"
+#include <HTTPClient.h>
 
+#include <ArduinoJson.h>
 #include "fb_gfx.h"
 #include "fd_forward.h"
 #include "fr_forward.h"
@@ -195,6 +197,49 @@ static int run_face_recognition(dl_matrix3du_t *image_matrix, box_array_t *net_b
             if (matched_id >= 0) {
                 Serial.printf("Match Face ID: %u\n", matched_id);
                 rgb_printf(image_matrix, FACE_COLOR_GREEN, "Bienvenido de nuevo %u", matched_id);
+                                  HTTPClient http;
+                                  http.begin("http://192.168.90.107:3000/sensores/check");
+                                  http.addHeader("Content-Type", "application/json");
+                                  http.addHeader("Access-Control-Allow-Origin", "*");
+                                 
+                                  String json;
+                                  int bandera = 0;
+
+                                  StaticJsonDocument<200> doc;
+                                 doc["nombreDentista"] = matched_id;
+                                 doc["entradaSalida"] = "entrada";
+                                 serializeJson(doc, json);
+                                 int httpCode = http.POST(json);
+                                 Serial.println(httpCode);
+                                 String response = http.getString();
+                                 bandera = 1;
+                                 int doctor = matched_id;
+                                 
+                                 if (httpCode < 0){ 
+                                 Serial.printf("Error occurred while sending HTTP POST: %s\n", http.errorToString(httpCode).c_str());
+                                 String respuesta = http.getString();
+                                 Serial.println(respuesta);}
+                                  
+                            
+                                   
+                                 if (bandera == 1 && doctor == matched_id){
+                                  StaticJsonDocument<200> docu;
+                                  docu["nombreDentista"] = matched_id;
+                                  docu["entradaSalida"] = "salida";
+                                  serializeJson(docu, json);
+                                  int httpCode = http.POST(json);
+                                  //processResponse(httpCode);
+                                  Serial.println(httpCode);
+                                  rgb_printf(image_matrix, FACE_COLOR_YELLOW, "Hasta luego %u", matched_id);
+                                  
+                                  if (httpCode < 0){ 
+                                    Serial.printf("Error occurred while sending HTTP POST: %s\n", http.errorToString(httpCode).c_str());
+                                    String respuesta = http.getString();
+                                    Serial.println(respuesta);
+                                     
+                                          
+                                      }
+                                      bandera = 0 ;}
             } else {
                 Serial.println("No Match Found");
                 rgb_print(image_matrix, FACE_COLOR_RED, "Rostro no reconocido");
@@ -384,8 +429,9 @@ static esp_err_t stream_handler(httpd_req_t *req){
                         if (net_boxes || fb->format != PIXFORMAT_JPEG){
                             if(net_boxes){
                                 detected = true;
-                                if(recognition_enabled){
-                                    face_id = run_face_recognition(image_matrix, net_boxes);
+                                if(recognition_enabled){                                 
+                                  face_id = run_face_recognition(image_matrix, net_boxes);                                 
+                                  
                                 }
                                 fr_recognize = esp_timer_get_time();
                                 draw_face_boxes(image_matrix, net_boxes, face_id);
@@ -670,4 +716,6 @@ void startCameraServer(){
     if (httpd_start(&stream_httpd, &config) == ESP_OK) {
         httpd_register_uri_handler(stream_httpd, &stream_uri);
     }
+
+    
 }

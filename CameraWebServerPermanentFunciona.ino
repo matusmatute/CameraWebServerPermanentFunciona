@@ -4,6 +4,7 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 
+
 //
 // WARNING!!! Make sure that you have either selected ESP32 Wrover Module,
 //            or another board which has PSRAM enabled
@@ -21,11 +22,11 @@
 
 // const char* ssid = "Lematus";
 // const char* password = "pollito1";
-// const char* ssid = "Torre C Labs";
-// const char* password = "1q2w3e4r5t";
+ const char* ssid = "Torre C Labs";
+ const char* password = "1q2w3e4r5t";
 
-const char* ssid = "Monado";
-const char* password = "Tensor333_";
+//const char* ssid = "Monado";
+//const char* password = "Tensor333_";
 
 void startCameraServer();
 
@@ -110,6 +111,8 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  delay(10000);
+
+//    
+
+//   delay(100);
 }
