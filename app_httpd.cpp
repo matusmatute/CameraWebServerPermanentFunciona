@@ -194,16 +194,30 @@ static int run_face_recognition(dl_matrix3du_t *image_matrix, box_array_t *net_b
             }
         } else {
             matched_id = recognize_face(&id_list, aligned_face);
+
+            int bandera = 0;
+            int doctor = matched_id;
+            const unsigned long MIN_TIME_BETWEEN_IFS = 5 * 60 * 1000; // 5 minutos en milisegundos
+            unsigned long lastTimeIf1Activated = 0;
             if (matched_id >= 0) {
                 Serial.printf("Match Face ID: %u\n", matched_id);
                 rgb_printf(image_matrix, FACE_COLOR_GREEN, "Bienvenido de nuevo %u", matched_id);
-                                  HTTPClient http;
+                                                      
+                                
+            } else {
+                Serial.println("No Match Found");
+                rgb_print(image_matrix, FACE_COLOR_RED, "Rostro no reconocido");
+                matched_id = -1;
+            }
+
+            if(matched_id >= 0 && bandera == 0){
+                                   HTTPClient http;
                                   http.begin("http://192.168.90.107:3000/sensores/check");
                                   http.addHeader("Content-Type", "application/json");
                                   http.addHeader("Access-Control-Allow-Origin", "*");
                                  
                                   String json;
-                                  int bandera = 0;
+                                  
 
                                   StaticJsonDocument<200> doc;
                                  doc["nombreDentista"] = matched_id;
@@ -213,16 +227,28 @@ static int run_face_recognition(dl_matrix3du_t *image_matrix, box_array_t *net_b
                                  Serial.println(httpCode);
                                  String response = http.getString();
                                  bandera = 1;
-                                 int doctor = matched_id;
+                                 lastTimeIf1Activated = millis();
+                                 
+                                 
                                  
                                  if (httpCode < 0){ 
                                  Serial.printf("Error occurred while sending HTTP POST: %s\n", http.errorToString(httpCode).c_str());
                                  String respuesta = http.getString();
                                  Serial.println(respuesta);}
-                                  
-                            
-                                   
-                                 if (bandera == 1 && doctor == matched_id){
+                                 
+                                }
+                                 if(bandera == 1 && matched_id >= 0) {
+                                    rgb_print(image_matrix, FACE_COLOR_GREEN, "Registrado");
+                                 } 
+                                 Serial.println(bandera);
+
+            if (matched_id >= 0 && bandera == 1 && doctor == matched_id && millis() - lastTimeIf1Activated >= MIN_TIME_BETWEEN_IFS ){
+                                HTTPClient http;
+                                  http.begin("http://192.168.90.107:3000/sensores/check");
+                                  http.addHeader("Content-Type", "application/json");
+                                  http.addHeader("Access-Control-Allow-Origin", "*");
+                                 
+                                  String json;
                                   StaticJsonDocument<200> docu;
                                   docu["nombreDentista"] = matched_id;
                                   docu["entradaSalida"] = "salida";
@@ -239,13 +265,8 @@ static int run_face_recognition(dl_matrix3du_t *image_matrix, box_array_t *net_b
                                      
                                           
                                       }
-                                      bandera = 0 ;}
-            } else {
-                Serial.println("No Match Found");
-                rgb_print(image_matrix, FACE_COLOR_RED, "Rostro no reconocido");
-                matched_id = -1;
-            }
-        }
+                                      bandera = 0 ;
+            }}
     } else {
         Serial.println("Face Not Aligned");
         //rgb_print(image_matrix, FACE_COLOR_YELLOW, "Human Detected");
