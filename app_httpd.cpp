@@ -31,6 +31,12 @@
 unsigned long currentMillis = 0;
 unsigned long openedMillis = 0;
 long interval = 5000; 
+int bandera = 0;
+
+
+const unsigned long MIN_TIME_BETWEEN_IFS = 5 * 60 * 1000; // 5 minutos en milisegundos
+unsigned long lastTimeIf1Activated = 0;
+
 
 #define FACE_COLOR_WHITE  0x00FFFFFF
 #define FACE_COLOR_BLACK  0x00000000
@@ -170,7 +176,10 @@ static void draw_face_boxes(dl_matrix3du_t *image_matrix, box_array_t *boxes, in
 
 static int run_face_recognition(dl_matrix3du_t *image_matrix, box_array_t *net_boxes){
     dl_matrix3du_t *aligned_face = NULL;
-    int matched_id = 0;
+    int matched_id = -1;
+    int doctor = 0;
+    
+    
 
     aligned_face = dl_matrix3du_alloc(1, FACE_WIDTH, FACE_HEIGHT, 3);
     if(!aligned_face){
@@ -195,24 +204,17 @@ static int run_face_recognition(dl_matrix3du_t *image_matrix, box_array_t *net_b
         } else {
             matched_id = recognize_face(&id_list, aligned_face);
 
-            int bandera = 0;
-            int doctor = matched_id;
-            const unsigned long MIN_TIME_BETWEEN_IFS = 5 * 60 * 1000; // 5 minutos en milisegundos
-            unsigned long lastTimeIf1Activated = 0;
-            if (matched_id >= 0) {
-                Serial.printf("Match Face ID: %u\n", matched_id);
-                rgb_printf(image_matrix, FACE_COLOR_GREEN, "Bienvenido de nuevo %u", matched_id);
-                                                      
-                                
-            } else {
-                Serial.println("No Match Found");
+            if (matched_id <0){
+              Serial.println("No Match Found");
                 rgb_print(image_matrix, FACE_COLOR_RED, "Rostro no reconocido");
                 matched_id = -1;
             }
-
-            if(matched_id >= 0 && bandera == 0){
+            if (matched_id >= 0) {
+                Serial.printf("Match Face ID: %u\n", matched_id);
+                rgb_printf(image_matrix, FACE_COLOR_GREEN, "Bienvenido de nuevo %u", matched_id);                   
+                      if(matched_id >= 0 && bandera == 0){
                                    HTTPClient http;
-                                  http.begin("http://192.168.90.107:3000/sensores/check");
+                                  http.begin("http://192.168.0.139:3000/sensores/check");
                                   http.addHeader("Content-Type", "application/json");
                                   http.addHeader("Access-Control-Allow-Origin", "*");
                                  
@@ -227,6 +229,7 @@ static int run_face_recognition(dl_matrix3du_t *image_matrix, box_array_t *net_b
                                  Serial.println(httpCode);
                                  String response = http.getString();
                                  bandera = 1;
+                                 doctor = matched_id;
                                  lastTimeIf1Activated = millis();
                                  
                                  
@@ -235,16 +238,14 @@ static int run_face_recognition(dl_matrix3du_t *image_matrix, box_array_t *net_b
                                  Serial.printf("Error occurred while sending HTTP POST: %s\n", http.errorToString(httpCode).c_str());
                                  String respuesta = http.getString();
                                  Serial.println(respuesta);}
+                      }
                                  
-                                }
-                                 if(bandera == 1 && matched_id >= 0) {
-                                    rgb_print(image_matrix, FACE_COLOR_GREEN, "Registrado");
-                                 } 
-                                 Serial.println(bandera);
-
-            if (matched_id >= 0 && bandera == 1 && doctor == matched_id && millis() - lastTimeIf1Activated >= MIN_TIME_BETWEEN_IFS ){
+                                
+            } 
+ 
+            if ( bandera == 1 && doctor == matched_id && millis() - lastTimeIf1Activated >= MIN_TIME_BETWEEN_IFS ){
                                 HTTPClient http;
-                                  http.begin("http://192.168.90.107:3000/sensores/check");
+                                  http.begin("http://192.168.0.139:3000/sensores/check");
                                   http.addHeader("Content-Type", "application/json");
                                   http.addHeader("Access-Control-Allow-Origin", "*");
                                  
