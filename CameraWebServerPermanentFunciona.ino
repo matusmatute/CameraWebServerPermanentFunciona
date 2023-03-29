@@ -13,10 +13,10 @@
  //#define CAMERA_MODEL_M5STACK_WIDE
  #define CAMERA_MODEL_AI_THINKER
  #include "camera_pins.h"
-  const char* ssid = "Lematus";
-  const char* password = "pollito1";
- //  const char* ssid = "Torre C Labs";
- //  const char* password = "1q2w3e4r5t";
+  // const char* ssid = "Lematus";
+  // const char* password = "pollito1";
+  const char* ssid = "Invitados PLAI";
+  const char* password = "ip@ra3linvitado";
  //const char* ssid = "Monado";
  //const char* password = "Tensor333_";
  void startCameraServer();

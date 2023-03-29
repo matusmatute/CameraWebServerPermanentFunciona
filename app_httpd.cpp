@@ -214,7 +214,7 @@ static int run_face_recognition(dl_matrix3du_t *image_matrix, box_array_t *net_b
                 rgb_printf(image_matrix, FACE_COLOR_GREEN, "Bienvenido de nuevo %u", matched_id);                   
                       if(matched_id >= 0 && bandera == 0){
                                    HTTPClient http;
-                                  http.begin("http://192.168.0.139:3000/sensores/check");
+                                  http.begin("http://192.168.90.136:3000/sensores/check");
                                   http.addHeader("Content-Type", "application/json");
                                   http.addHeader("Access-Control-Allow-Origin", "*");
                                  
